@@ -19,11 +19,11 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-# find_package(CUDA REQUIRED) # Uncomment this line if you have trouble compiling
+find_package(CUDA REQUIRED) # Uncomment this line if you have trouble compiling
 find_package(OpenCV REQUIRED)
 
-set(CAFFE_DIR /path/to/caffe)
-set(OPENPOSE_DIR /path/to/openpose)
+set(CAFFE_DIR /home/snehesh/PROJECTS/openpose/3rdparty/caffe)
+set(OPENPOSE_DIR /home/snehesh/PROJECTS/openpose)
 
 set(CAFFE_INCLUDE_DIRS ${CAFFE_DIR}/distribute/include)
 set(CAFFE_LINK_LIBRARY ${CAFFE_DIR}/distribute/lib/libcaffe.so)
