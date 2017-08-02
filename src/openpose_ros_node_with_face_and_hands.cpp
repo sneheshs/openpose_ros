@@ -42,9 +42,9 @@ DEFINE_int32(logging_level,             3,              "The logging level. Inte
                                                         " 255 will not output any. Current OpenPose library messages are in the range 0-4: 1 for"
                                                         " low priority messages and 4 for important ones.");
 // Camera Topic
-DEFINE_string(camera_topic,             "/camera/image_raw",      "Image topic that OpenPose will process.");
+DEFINE_string(camera_topic,             "/camera/rgb/image_raw",      "Image topic that OpenPose will process.");
 // OpenPose
-DEFINE_string(model_folder,             "/path/to/openpose/models/",      "Folder path (absolute or relative) where the models (pose, face, ...) are located.");
+DEFINE_string(model_folder,             "/home/snehesh/PROJECTS/openpose/models/",      "Folder path (absolute or relative) where the models (pose, face, ...) are located.");
 DEFINE_string(resolution,               "1280x720",     "The image resolution (display and output). Use \"-1x-1\" to force the program to use the"
                                                         " default images resolution.");
 DEFINE_int32(num_gpu,                   -1,             "The number of GPU devices to use. If negative, it will use all the available GPUs in your"
@@ -149,6 +149,10 @@ class UserInputClass
         ros::NodeHandle nh_;
         image_transport::ImageTransport it_;
         image_transport::Subscriber image_sub_;
+
+        image_transport::Publisher  image_pub_;
+        sensor_msgs::ImagePtr pub_msg_;
+
         cv_bridge::CvImagePtr cv_img_ptr_;
 
     public:
@@ -204,7 +208,17 @@ class UserInputClass
 // This worker will just display the result
 class UserOutputClass
 {
+private:
+        ros::NodeHandle nh_;
+        image_transport::ImageTransport it_;
+        image_transport::Publisher  image_pub_;
+        sensor_msgs::ImagePtr pub_msg_;
+
 public:
+    UserOutputClass(): it_(nh_)
+    {
+        image_pub_ = it_.advertise("camera_with_pose/image", 1);
+    }
     void display(const std::shared_ptr<std::vector<op::Datum>>& datumsPtr)
     {
         // User's displaying/saving/other processing here
@@ -212,11 +226,20 @@ public:
             // datum.poseKeypoints: Array<float> with the estimated pose
         if (datumsPtr != nullptr && !datumsPtr->empty())
         {
-            cv::imshow("OpenPose ROS", datumsPtr->at(0).cvOutputData);
+            //cv::imshow("OpenPose ROS", datumsPtr->at(0).cvOutputData);
+
+            publishImageWithPose(datumsPtr->at(0).cvOutputData);
+            
             cv::waitKey(1); // It displays the image and sleeps at least 1 ms (it usually sleeps ~5-10 msec to display the image)
         }
         else
             op::log("Nullptr or empty datumsPtr found.", op::Priority::High, __LINE__, __FUNCTION__, __FILE__);
+    }
+
+    void publishImageWithPose(cv::Mat& outputImage)
+    {
+        pub_msg_ = cv_bridge::CvImage(std_msgs::Header(), "bgr8", outputImage).toImageMsg();
+        image_pub_.publish(pub_msg_);
     }
 };
 

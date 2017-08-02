@@ -38,9 +38,9 @@ DEFINE_int32(logging_level,             3,              "The logging level. Inte
                                                         " 255 will not output any. Current OpenPose library messages are in the range 0-4: 1 for"
                                                         " low priority messages and 4 for important ones.");
 // Camera Topic
-DEFINE_string(camera_topic,             "/camera/image_raw",      "Image topic that OpenPose will process.");
+DEFINE_string(camera_topic,             "/camera/rgb/image_raw",      "Image topic that OpenPose will process.");
 // OpenPose
-DEFINE_string(model_folder,             "/path/to/openpose/models/",      "Folder path (absolute or relative) where the models (pose, face, ...) are located.");
+DEFINE_string(model_folder,             "/home/snehesh/PROJECTS/openpose/models/",      "Folder path (absolute or relative) where the models (pose, face, ...) are located.");
 DEFINE_string(model_pose,               "COCO",         "Model to be used (e.g. COCO, MPI, MPI_4_layers).");
 DEFINE_string(net_resolution,           "656x368",      "Multiples of 16. If it is increased, the accuracy potentially increases. If it is decreased,"
                                                         " the speed increases. For maximum speed-accuracy balance, it should keep the closest aspect"
@@ -69,6 +69,10 @@ class RosImgSub
         ros::NodeHandle nh_;
         image_transport::ImageTransport it_;
         image_transport::Subscriber image_sub_;
+
+    	image_transport::Publisher  image_pub_;
+        sensor_msgs::ImagePtr pub_msg_;
+
         cv_bridge::CvImagePtr cv_img_ptr_;
 
     public:
@@ -76,6 +80,7 @@ class RosImgSub
         {
             // Subscribe to input video feed and publish output video feed
             image_sub_ = it_.subscribe(image_topic, 1, &RosImgSub::convertImage, this);
+            image_pub_ = it_.advertise("camera_with_pose/image", 1);
             cv_img_ptr_ = nullptr;
         }
 
@@ -99,6 +104,11 @@ class RosImgSub
             return cv_img_ptr_;
         }
 
+        void publishImageWithPose(cv::Mat& outputImage)
+        {
+        	pub_msg_ = cv_bridge::CvImage(std_msgs::Header(), "bgr8", outputImage).toImageMsg();
+			image_pub_.publish(pub_msg_);
+        }
 };
 
 int openPoseROSTutorial()
@@ -174,10 +184,15 @@ int openPoseROSTutorial()
 
             // ------------------------- SHOWING RESULT AND CLOSING -------------------------
             // Step 1 - Show results
-            cv::imshow("OpenPose ROS", outputImage);
+            // cv::imshow("OpenPose ROS", outputImage);
+
+            //Snehesh: publish to ros instead of displaying using OpenCV
+            ris.publishImageWithPose(outputImage);
+
             cv::waitKey(1);
             frame_count++;
         }
+
         ros::spinOnce();
     }
 
