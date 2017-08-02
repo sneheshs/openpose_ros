@@ -32,6 +32,10 @@ Tested on:
    ```bash
    git clone https://github.com/firephinx/openpose_ros.git
    ```
+6. Use this only if you want to use RGB-D camera supported with OpenNI.
+   ```bash
+   sudo apt install ros-kinetic-openni2-launch 
+   ```
 6. Modify the following lines in the CMakeLists.txt to the proper directories of where you installed caffe and openpose:
    ```bash
    set(CAFFE_DIR /path/to/caffe)
@@ -39,11 +43,11 @@ Tested on:
    ```
 7. Modify the model_folder line in src/openpose_ros_node.cpp and src/openpose_ros_node_with_face_and_hands.cpp to where openpose is installed.
    ```bash
-   DEFINE_string(model_folder,             "/path/to/openpose/models/",      "Folder where the pose models (COCO and MPI) are located.");
+   DEFINE_string(model_folder,    "/path/to/openpose/models/",    "Folder where the pose models (COCO and MPI) are located.");
    ```
 8. Modify the image_topic line in src/openpose_ros_node.cpp and src/openpose_ros_node_with_face_and_hands.cpp to the image_topic you want to process.
    ```bash
-   DEFINE_string(camera_topic,             "/camera/image_raw",      "Image topic that OpenPose will process.");
+   DEFINE_string(camera_topic,    "/camera/image_raw",    "Image topic that OpenPose will process.");
    ```
 9. Modify the other parameters in src/openpose_ros_node.cpp and src/openpose_ros_node_with_face_and_hands.cpp to your liking such as the net_resolution and resolution of the image.
 10. Run catkin_make from your catkin_workspace directory. (It will fail the first time so run it twice.)
@@ -55,5 +59,16 @@ Tested on:
 ## Running
 ```bash
 source catkin_workspace/devel/setup.bash
-rosrun openpose_ros openpose_ros_node or rosrun openpose_ros openpose_ros_node_with_face_and_hands
+rosrun openpose_ros openpose_ros_node  ### Just body pose
+rosrun openpose_ros openpose_ros_node_with_face_and_hands ### Body pose, face, and hands
+```
+
+## Running With ROS and RGB-D
+```bash
+source catkin_workspace/devel/setup.bash
+roscore
+rosrun rviz rviz
+roslaunch openni2_launch openni2.launch
+rosrun openpose_ros openpose_ros_node  ### Just body pose
+rosrun openpose_ros openpose_ros_node_with_face_and_hands ### Body pose, face, and hands
 ```
