@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   gflags
   glog_catkin
+  std_msgs
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -61,11 +63,10 @@ set(OPENPOSE_LINK_LIBRARY ${OPENPOSE_DIR}/build/lib/libopenpose.so)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+  FILES
+  HumanPoseKeypoints.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -82,10 +83,10 @@ set(OPENPOSE_LINK_LIBRARY ${OPENPOSE_DIR}/build/lib/libopenpose.so)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -119,7 +120,7 @@ set(OPENPOSE_LINK_LIBRARY ${OPENPOSE_DIR}/build/lib/libopenpose.so)
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES openpose_ros
-   CATKIN_DEPENDS roscpp rospy
+   CATKIN_DEPENDS roscpp rospy message_runtime
 #  DEPENDS system_lib
 )
 

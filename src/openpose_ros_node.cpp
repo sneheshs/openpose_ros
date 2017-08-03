@@ -30,6 +30,10 @@
 #include <openpose/pose/headers.hpp>
 #include <openpose/utilities/headers.hpp>
 
+#include <openpose_ros/HumanPoseKeypoints.h>
+#include <std_msgs/Float32.h>
+#include <vector>
+
 // See all the available parameter options withe the `--help` flag. E.g. `./build/examples/openpose/openpose.bin --help`.
 // Note: This command will show you flags for other unnecessary 3rdparty files. Check only the flags for the OpenPose
 // executable. E.g. for `openpose.bin`, look for `Flags from examples/openpose/openpose.cpp:`.
@@ -63,24 +67,76 @@ DEFINE_double(render_threshold,         0.05,           "Only estimated keypoint
 DEFINE_double(alpha_pose,               0.6,            "Blending factor (range 0-1) for the body part rendering. 1 will show it completely, 0 will"
                                                         " hide it. Only valid for GPU rendering.");
 
+/*
+POSE_COCO_BODY_PARTS {
+    {0,  "Nose"},
+    {1,  "Neck"},
+    {2,  "RShoulder"},
+    {3,  "RElbow"},
+    {4,  "RWrist"},
+    {5,  "LShoulder"},
+    {6,  "LElbow"},
+    {7,  "LWrist"},
+    {8,  "RHip"},
+    {9,  "RKnee"},
+    {10, "RAnkle"},
+    {11, "LHip"},
+    {12, "LKnee"},
+    {13, "LAnkle"},
+    {14, "REye"},
+    {15, "LEye"},
+    {16, "REar"},
+    {17, "LEar"},
+    {18, "Bkg"},
+};
+
+POSE_COCO_PAIRS {
+	1,2,
+	1,5,
+	2,3,
+	3,4,
+	5,6,
+	6,7,
+	1,8,
+	8,9,
+	9,10,
+	1,11,
+	11,12,
+	12,13,
+	1,0,
+	0,14,
+	14,16,
+	0,15,
+	15,17,
+	2,16,
+	5,17
+};
+*/
+
 class RosImgSub
 {
     private:
-        ros::NodeHandle nh_;
-        image_transport::ImageTransport it_;
-        image_transport::Subscriber image_sub_;
+        ros::NodeHandle 					nh_;
+        image_transport::ImageTransport 	it_;
+        image_transport::Subscriber 		image_sub_;
 
-    	image_transport::Publisher  image_pub_;
-        sensor_msgs::ImagePtr pub_msg_;
+    	image_transport::Publisher			image_pub_;
+        sensor_msgs::ImagePtr 				pub_msg_;
 
-        cv_bridge::CvImagePtr cv_img_ptr_;
+        cv_bridge::CvImagePtr 				cv_img_ptr_;
+
+        //Publish Pose Keypoints
+		ros::Publisher 						kp_pub_;
+        openpose_ros::HumanPoseKeypoints	kp_;
+
 
     public:
         RosImgSub(const std::string& image_topic): it_(nh_)
         {
             // Subscribe to input video feed and publish output video feed
-            image_sub_ = it_.subscribe(image_topic, 1, &RosImgSub::convertImage, this);
-            image_pub_ = it_.advertise("camera_with_pose/image", 1);
+            image_sub_  = it_.subscribe(image_topic, 1, &RosImgSub::convertImage, this);
+            image_pub_  = it_.advertise("camera_with_pose/image", 1);
+			kp_pub_ 	= nh_.advertise<openpose_ros::HumanPoseKeypoints>("camera_with_pose/keypoints", 1);
             cv_img_ptr_ = nullptr;
         }
 
@@ -104,10 +160,21 @@ class RosImgSub
             return cv_img_ptr_;
         }
 
-        void publishImageWithPose(cv::Mat& outputImage)
+        void publishImageWithPose(cv::Mat& outputImage, op::Array<float> poseKeypoints)
         {
+        	float fTest = 0.1f;
+
         	pub_msg_ = cv_bridge::CvImage(std_msgs::Header(), "bgr8", outputImage).toImageMsg();
+
+        	//WORK IN PROGRESS HERE --- 08/02/2017
+        	kp_.keypoints.clear();
+        	for(size_t i=0; i<poseKeypoints.getSize(1); i++)
+        	{
+        		kp_.keypoints.push_back(poseKeypoints[i]);
+        	}
+
 			image_pub_.publish(pub_msg_);
+			kp_pub_.publish(kp_);
         }
 };
 
@@ -177,6 +244,12 @@ int openPoseROSTutorial()
             // Step 3 - Estimate poseKeypoints
             poseExtractorCaffe.forwardPass(netInputArray, {inputImage.cols, inputImage.rows}, scaleRatios);
             const auto poseKeypoints = poseExtractorCaffe.getPoseKeypoints();
+
+
+
+
+
+
             // Step 4 - Render poseKeypoints
             poseRenderer.renderPose(outputArray, poseKeypoints);
             // Step 5 - OpenPose output format to cv::Mat
@@ -187,7 +260,7 @@ int openPoseROSTutorial()
             // cv::imshow("OpenPose ROS", outputImage);
 
             //Snehesh: publish to ros instead of displaying using OpenCV
-            ris.publishImageWithPose(outputImage);
+            ris.publishImageWithPose(outputImage, poseKeypoints);
 
             cv::waitKey(1);
             frame_count++;
