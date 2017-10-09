@@ -153,6 +153,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}_node src/openpose_ros_node.cpp)
 add_executable(${PROJECT_NAME}_node_with_face_and_hands src/openpose_ros_node_with_face_and_hands.cpp)
+#add_executable(poseXY_depth_fuse src/poseXY_depth_fuse.cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -164,6 +166,8 @@ add_executable(${PROJECT_NAME}_node_with_face_and_hands src/openpose_ros_node_wi
 ## same as for the library above
 add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${PROJECT_NAME}_node_with_face_and_hands ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+#add_dependencies(poseXY_depth_fuse ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
@@ -178,6 +182,10 @@ target_link_libraries(${PROJECT_NAME}_node_with_face_and_hands
   ${CAFFE_LINK_LIBRARY}
   ${OPENPOSE_LINK_LIBRARY}
 )
+
+#target_link_libraries(poseXY_depth_fuse
+#  ${catkin_LIBRARIES}
+#)
 
 #############
 ## Install ##
