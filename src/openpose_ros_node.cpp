@@ -31,8 +31,7 @@
 #include <openpose/utilities/headers.hpp>
 
 #include <openpose_ros/HumanPoseKeypoints.h>
-#include <std_msgs/Float32.h>
-#include <vector>
+
 
 // See all the available parameter options withe the `--help` flag. E.g. `./build/examples/openpose/openpose.bin --help`.
 // Note: This command will show you flags for other unnecessary 3rdparty files. Check only the flags for the OpenPose
@@ -166,9 +165,9 @@ class RosImgSub
 
         	pub_msg_ = cv_bridge::CvImage(std_msgs::Header(), "bgr8", outputImage).toImageMsg();
 
-        	//WORK IN PROGRESS HERE --- 08/02/2017
         	kp_.keypoints.clear();
-        	for(size_t i=0; i<poseKeypoints.getSize(1); i++)
+        	//x, y, score
+        	for(size_t i=0; i<poseKeypoints.getSize(1)*3; i++)
         	{
         		kp_.keypoints.push_back(poseKeypoints[i]);
         	}
@@ -245,11 +244,6 @@ int openPoseROSTutorial()
             poseExtractorCaffe.forwardPass(netInputArray, {inputImage.cols, inputImage.rows}, scaleRatios);
             const auto poseKeypoints = poseExtractorCaffe.getPoseKeypoints();
 
-
-
-
-
-
             // Step 4 - Render poseKeypoints
             poseRenderer.renderPose(outputArray, poseKeypoints);
             // Step 5 - OpenPose output format to cv::Mat
@@ -260,6 +254,10 @@ int openPoseROSTutorial()
             // cv::imshow("OpenPose ROS", outputImage);
 
             //Snehesh: publish to ros instead of displaying using OpenCV
+			auto numberPeopleDetected = poseKeypoints.getSize(0);
+			auto numberBodyParts = poseKeypoints.getSize(1);
+			ROS_INFO("Number of People = %d", numberPeopleDetected);
+			ROS_INFO("Number of Body Parts = %d", numberBodyParts);
             ris.publishImageWithPose(outputImage, poseKeypoints);
 
             cv::waitKey(1);
